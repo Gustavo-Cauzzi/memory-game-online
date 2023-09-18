@@ -5,11 +5,10 @@ from view.MenuView import MenuView
 root = tk.Tk()
 root.title("Memória online")
 
-def start_game():
-    print("dnisuo")
+def go_to_game_view():
     menu.destroy()
     GameView(root)
 
-menu = MenuView(root, on_game_started=start_game)
+menu = MenuView(root, on_game_joined=go_to_game_view)
 
 tk.mainloop()

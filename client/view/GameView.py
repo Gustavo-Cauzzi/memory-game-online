@@ -1,8 +1,8 @@
 import tkinter as tk
 import threading
-from cards import *
+import controller.GameController as GameController
 from itertools import tee
-from constants import Results, results_text, CARD_COLUMNS
+from config.constants import Results, results_text, CARD_COLUMNS, CARD_PAIRS_QUANTITY
 
 class GameView:
     def __init__(self, root):
@@ -36,7 +36,7 @@ class GameView:
         label.grid(row=0, column=1)
 
     def render_cards(self):
-        for idx, card in enumerate(cards):
+        for idx, card in enumerate(GameController.current_game['cards']):
             text = card['card_pair'] if card['turn_turned'] else 'X'
             tk.Button(self.cards_frame, text=text, padx=10, pady=10, command=lambda idx=idx: self.card_click(idx)) \
                 .grid(row=idx // CARD_COLUMNS, column=idx % CARD_COLUMNS)
@@ -78,7 +78,7 @@ class GameView:
         if not self.current_player_turn or self.block_actions:
             return
 
-        card = cards[card_index]
+        card = GameController.current_game['cards'][card_index]
         if card['turn_turned']:
             return
         
