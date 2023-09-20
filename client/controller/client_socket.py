@@ -52,7 +52,6 @@ def send_data(route, payload = {}):
     request_body = { "route": route, "payload": payload, "client_id": client_id }
     client_socket.send(json.dumps(request_body).encode())
     
-    # response = json.loads(client_socket.recv(4096).decode())
     response = None
     while True:
         sleep(0.2)

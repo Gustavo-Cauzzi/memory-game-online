@@ -42,8 +42,12 @@ class MenuView:
             label = tk.Label(game_list_container, text=f'{connected_players}/2')
             label.grid(row=idx, column=1)
 
-            button = tk.Button(game_list_container, text="Entrar", command=lambda game=game: self.connect_to_game(game['game_id']) if connected_players == 1 else None)
-            button.grid(row=idx, column=3)
+            if connected_players != 2:
+                button_or_nothing = tk.Button(game_list_container, text="Entrar", command=lambda game=game: self.connect_to_game(game['game_id']) if connected_players == 1 else None)
+            else:
+                button_or_nothing = tk.Label(game_list_container, text=" ")
+
+            button_or_nothing.grid(row=idx, column=3)
 
         game_list_container.pack()
 

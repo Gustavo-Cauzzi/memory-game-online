@@ -55,5 +55,10 @@ def game_join(socket_data):
 	game = next(filter(lambda game: game.game_id == game_id, games), None)
 	if not game:
 		raise AppException("Não foi possível encontrar o jogo")
-	else:
-		return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
+	
+	if len(game.connected_players) == 2:
+		raise AppException("Número de jogadores máximo alcançado")
+	
+	game.connected_players.append(socket_data['client_id'])
+	game.players_sockets.append(socket_data['socket'])
+	return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
