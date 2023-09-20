@@ -76,6 +76,10 @@ class MenuView:
 
     def create_game(self, game_id):
         print('game_id: ', game_id)
+        if not game_id or len(game_id) == 0:
+            self.error = 'Informe um nome ao jogo'
+            self.render()
+            return
         GameController.create_game(game_id)
         self.on_game_joined()
         self.destroy()
