@@ -1,5 +1,5 @@
 
-from Utils import ok_response, error_response
+from Utils import ok_response, error_response, AppException, AppResponse
 import random
 import uuid
 
@@ -34,14 +34,12 @@ class Game:
 				print(self.cards[j * 5 + i]['card_pair'], end=" ")
 			print("")
 
+def get_game_list():
+	return [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
 # --------------------------------
 
 def get_games_info(socket_data):
-    socket_data['socket'].send(
-        ok_response({
-            "games": [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
-        })
-    )
+	return AppResponse(payload={"games": get_game_list()})
 
 # --------------------------------
 
@@ -49,13 +47,13 @@ def game_create(socket_data):
 	print("Create")
 	game = Game(socket_data['payload']['game_id'], socket_data['client_id'], socket_data['socket'])
 	games.append(game)
-	socket_data['socket'].send(ok_response({ "cards": game.cards }))
+	return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
 
 def game_join(socket_data):
 	print("Join")
 	game_id = socket_data['payload']['game_id']
 	game = next(filter(lambda game: game.game_id == game_id, games), None)
 	if not game:
-		socket_data['socket'].send(error_response("Não foi possível encontrar o jogo"))
+		raise AppException("Não foi possível encontrar o jogo")
 	else:
-		socket_data['socket'].send(ok_response({ "cards": game.cards }))
+		return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())

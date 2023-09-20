@@ -6,15 +6,16 @@ current_game = {
 }
 
 def exit_game():
-    print("1")
     socket.close_socket()
-    print("2")
 
 # --------------
 
 def get_games():
     response = socket.send_data('/game')
     return response['games']
+
+def on_new_game(on_new_game_added):
+    socket.on('/game/update', on_new_game_added)
 
 # --------------
 

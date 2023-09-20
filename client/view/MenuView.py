@@ -8,7 +8,17 @@ class MenuView:
         self.on_game_joined = on_game_joined
         self.error = None
         self.game_list = GameController.get_games()
+        self.set_socket_listeners()
         self.render()
+
+    def update_list(self, payload):
+        print('update_list', self.frame, self.frame.winfo_exists())
+        if self.frame.winfo_exists():
+            self.game_list = payload
+            self.render()
+
+    def set_socket_listeners(self): 
+        GameController.on_new_game(self.update_list)
 
     def render(self):
         if self.frame:
@@ -37,7 +47,7 @@ class MenuView:
 
         game_list_container.pack()
 
-        label = tk.Label(self.frame, text="---------------------")
+        label = tk.Label(self.frame, text="-----------------------------------------")
         label.pack()
         
         label = tk.Label(self.frame, text="Crie um jogo")
