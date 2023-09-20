@@ -6,30 +6,67 @@ class MenuView:
         self.root = root
         self.frame = tk.Frame(self.root)
         self.on_game_joined = on_game_joined
+        self.error = None
+        self.game_list = GameController.get_games()
         self.render()
 
     def render(self):
-        label = tk.Label(self.frame, text="Conecte-se a um jogo ou crie um")
+        if self.frame:
+            self.frame.destroy()
+            self.frame = tk.Frame(self.root)
+
+        game_list_container = tk.Frame(self.frame)
+
+
+        label = tk.Label(self.frame, text="Lista de jogos:")
+        label.pack()
+        if len(self.game_list) == 0:
+            label = tk.Label(self.frame, text="Nenhum jogo encontrado")
+            label.pack()
+
+        for idx, game in enumerate(self.game_list):
+            connected_players = len(game['connected_players'])
+            label = tk.Label(game_list_container, text=game["game_id"])
+            label.grid(row=idx, column=0)
+
+            label = tk.Label(game_list_container, text=f'{connected_players}/2')
+            label.grid(row=idx, column=1)
+
+            button = tk.Button(game_list_container, text="Entrar", command=lambda game=game: self.connect_to_game(game['game_id']) if connected_players == 1 else None)
+            button.grid(row=idx, column=3)
+
+        game_list_container.pack()
+
+        label = tk.Label(self.frame, text="---------------------")
+        label.pack()
+        
+        label = tk.Label(self.frame, text="Crie um jogo")
         label.pack()
 
         entry = tk.Entry(self.frame, width=20)
         entry.pack()
 
-        button = tk.Button(self.frame, text="Conectar", command=lambda: self.on_game_connect(entry.get()))
+        button = tk.Button(self.frame, text="Criar", command=lambda: self.create_game(entry.get()))
         button.pack()
 
-        button = tk.Button(self.frame, text="Criar", command=lambda: self.on_game_create(entry.get()))
-        button.pack()
+        if self.error:
+            label = tk.Label(self.frame, text=self.error, fg="red")
+            label.pack()
+
         self.frame.pack()
     
-    def on_game_connect(self, game_id):
-        GameController.join_game(game_id)
-        self.on_game_joined()
-        self.destroy()
+    def connect_to_game(self, game_id):
+        try:
+            GameController.join_game(game_id)
+            self.on_game_joined()
+            self.destroy()
+        except:
+            self.error = "Não foi possível encontrar o jogo " + game_id
+            self.render()
 
-    def on_game_create(self, game_id):
+    def create_game(self, game_id):
+        print('game_id: ', game_id)
         GameController.create_game(game_id)
-        # print("Game" + str(GameController.cards))
         self.on_game_joined()
         self.destroy()
 

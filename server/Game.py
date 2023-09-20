@@ -25,7 +25,7 @@ def generate_card_map():
 class Game:
 	def __init__(self, game_id, creator_player_id, creator_socket):
 		self.game_id = game_id
-		self.conected_players = [creator_player_id]
+		self.connected_players = [creator_player_id]
 		self.players_sockets = [creator_socket]
 		self.cards = generate_card_map()
         
@@ -36,14 +36,23 @@ class Game:
 
 # --------------------------------
 
+def get_games_info(socket_data):
+    socket_data['socket'].send(
+        ok_response({
+            "games": [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
+        })
+    )
+
+# --------------------------------
+
 def game_create(socket_data):
-	print("create")
+	print("Create")
 	game = Game(socket_data['payload']['game_id'], socket_data['client_id'], socket_data['socket'])
 	games.append(game)
 	socket_data['socket'].send(ok_response({ "cards": game.cards }))
 
 def game_join(socket_data):
-	print("join")
+	print("Join")
 	game_id = socket_data['payload']['game_id']
 	game = next(filter(lambda game: game.game_id == game_id, games), None)
 	if not game:
