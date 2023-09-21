@@ -33,6 +33,9 @@ class Game:
 			for i in range(5):
 				print(self.cards[j * 5 + i]['card_pair'], end=" ")
 			print("")
+	
+	def json_obj():
+		return { "game_id": self.game_id, "connected_players": self.connected_players, "cards": self.cards }
 
 def get_game_list():
 	return [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
@@ -61,4 +64,4 @@ def game_join(socket_data):
 	
 	game.connected_players.append(socket_data['client_id'])
 	game.players_sockets.append(socket_data['socket'])
-	return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
+	return AppResponse(payload=game.json_obj(), server_emit_route="/game/update", server_emit_payload=get_game_list())
