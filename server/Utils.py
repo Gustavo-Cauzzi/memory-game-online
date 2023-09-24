@@ -16,8 +16,13 @@ class AppException(Exception):
 
 class AppResponse():
 	def __init__(self, server_emit_route=None, server_emit_payload=None, payload={}):
-		self.server_emit_route = server_emit_route
-		self.server_emit_payload = server_emit_payload
+		if server_emit_route and server_emit_payload:
+			multiple_routes = isinstance(server_emit_route, list)
+			self.server_emit_route = [server_emit_route] if not multiple_routes else server_emit_route
+			self.server_emit_payload = [server_emit_payload] if not multiple_routes else server_emit_payload
+		else:
+			self.server_emit_route = None
+			self.server_emit_payload = None
 		self.payload = payload
 	
 	def __str__(self):

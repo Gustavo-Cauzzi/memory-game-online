@@ -2,6 +2,8 @@
 from Utils import ok_response, error_response, AppException, AppResponse
 import random
 import uuid
+import copy
+import json
 
 CARD_PAIRS_QUANTITY = 20
 games = []
@@ -28,11 +30,25 @@ class Game:
 		self.connected_players = [creator_player_id]
 		self.players_sockets = [creator_socket]
 		self.cards = generate_card_map()
+		
+		self.started = False
+		self.current_player_turn = None 
+
+		def initialize_game(self):
+			if self.connected_players != 2:
+				raise AppException("Não há jogadores suficientes para começar a partida")
+			self.current_player_turn = random.choice(self.connected_players)
+			self.started = True
         
 		for j in range(8):
 			for i in range(5):
 				print(self.cards[j * 5 + i]['card_pair'], end=" ")
 			print("")
+
+	def as_dict(self):
+		cp = copy.copy(self)
+		cp.players_sockets = None
+		return cp.__dict__
 
 def get_game_list():
 	return [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
@@ -47,7 +63,7 @@ def game_create(socket_data):
 	print("Create")
 	game = Game(socket_data['payload']['game_id'], socket_data['client_id'], socket_data['socket'])
 	games.append(game)
-	return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
+	return AppResponse(payload=game.as_dict(), server_emit_route="/game/update", server_emit_payload=get_game_list())
 
 def game_join(socket_data):
 	print("Join")
@@ -61,4 +77,11 @@ def game_join(socket_data):
 	
 	game.connected_players.append(socket_data['client_id'])
 	game.players_sockets.append(socket_data['socket'])
-	return AppResponse(payload={ "cards": game.cards }, server_emit_route="/game/update", server_emit_payload=get_game_list())
+
+	game.initialize_game()
+
+	return AppResponse( 
+		payload=game, 
+		server_emit_route=["/game/update", "/game/start/" + game_id], 
+		server_emit_payload=[get_game_list(), game.as_dict()]
+	)

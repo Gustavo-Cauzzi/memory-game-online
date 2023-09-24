@@ -22,10 +22,12 @@ def on(route, callback):
 
 def listen():
     while True:
-        raw_data = client_socket.recv(4096).decode()
+        raw_data = client_socket.recv(16384).decode()
         if not raw_data:
             print("Resposta vazia - Socket fechado")
-            return
+            exit(0)
+
+        print("--- raw_data", raw_data)
 
         data = json.loads(raw_data)
         
@@ -65,9 +67,8 @@ def send_data(route, payload = {}):
         print(f'[ERROR - {route}] {message}')
         raise Exception(message)
 
-    payload = response['payload']
-    print(f'[RESPONSE {route}] {payload}')
-    return payload
+    print(f'[RESPONSE {route}] {response["payload"]}')
+    return response['payload']
 
 client_id = send_data('CONNECT')['client_id']
 print(f'client_id: {client_id}')

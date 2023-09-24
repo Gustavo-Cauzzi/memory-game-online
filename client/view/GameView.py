@@ -12,17 +12,36 @@ class GameView:
         self.points_frame = None
         self.frames = [self.cards_frame, self.points_frame]
 
-        # UI Behaviours
-        self.block_actions = False
-
         # Game
+        self.game = GameController.current_game['game']
+
+        # UI Behaviours
+        self.block_actions = not self.game['started']
+
         self.current_player_turn = True
         self.has_chosen_a_card = False
         self.chosen_card = None
         self.current_player_points = 0
         self.other_player_points = 0
 
+        self.setup_game_socket_events()
         self.render()
+
+    def setup_game_socket_events(self):
+        if not self.game['started']:
+            GameController.on_player_joined(
+                self.game['game_id'], 
+                lambda game: self.other_player_joined(game)
+            )
+        # GameController.
+
+    # Listeners ----------
+
+    def other_player_joined(self, updated_game):
+        self.game = updated_game
+        self.render()
+
+    # --------------------
 
     def render_points(self, result):
         if result:
@@ -36,7 +55,7 @@ class GameView:
         label.grid(row=0, column=1)
 
     def render_cards(self):
-        for idx, card in enumerate(GameController.current_game['cards']):
+        for idx, card in enumerate(self.game['cards']):
             text = card['card_pair'] if card['turn_turned'] else 'X'
             tk.Button(self.cards_frame, text=text, padx=10, pady=10, command=lambda idx=idx: self.card_click(idx)) \
                 .grid(row=idx // CARD_COLUMNS, column=idx % CARD_COLUMNS)
@@ -60,12 +79,17 @@ class GameView:
         self.points_frame = tk.Frame(self.root)
         self.cards_frame = tk.Frame(self.root)
        
-        result = self.check_for_winner()
-        self.render_points(result)
+        if not self.game['started']:
+            label = tk.Label(self.points_frame, text="Aguardando outro jogador...")
+            label.pack()
+        else: 
+            result = self.check_for_winner()
+            self.render_points(result)
+            if result:
+                self.block_actions = True
+
         self.render_cards()
 
-        if result:
-            self.block_actions = True
 
         for i in range(CARD_COLUMNS):
             self.cards_frame.grid_columnconfigure(i, minsize=40)
@@ -78,7 +102,7 @@ class GameView:
         if not self.current_player_turn or self.block_actions:
             return
 
-        card = GameController.current_game['cards'][card_index]
+        card = self.game['cards'][card_index]
         if card['turn_turned']:
             return
         

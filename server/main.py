@@ -37,7 +37,7 @@ router = {
 
 def handle_client(client_socket, address):
 	def remove_socket():
-		global inputs # ??
+		global inputs 
 		print("Socket closed ------------------------")
 		inputs = list(filter(lambda s: not s is client_socket, inputs))
 
@@ -51,8 +51,6 @@ def handle_client(client_socket, address):
 		remove_socket()
 		return
         
-
-
 	decoded_data = raw_data.decode()
 	data = json.loads(decoded_data) # { "payload": { "test": 2 }, "route": "/game/join", 'client_id': "uuid" }
 	data['socket'] = client_socket
@@ -79,7 +77,8 @@ def handle_client(client_socket, address):
 			data['socket'].send(ok_response(data['route'], appResponse.payload))
 
 			if appResponse.server_emit_route:
-				server_emit(data['client_id'], appResponse.server_emit_route, appResponse.server_emit_payload)
+				for idx, route in enumerate(appResponse.server_emit_route):
+					server_emit(data['client_id'], route, appResponse.server_emit_payload[idx])
 		except AppException as error:
 			data['socket'].send(error_response(data['route'], "Não foi possível encontrar o jogo"))
 

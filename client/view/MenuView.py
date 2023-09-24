@@ -12,7 +12,6 @@ class MenuView:
         self.render()
 
     def update_list(self, payload):
-        print('update_list', self.frame, self.frame.winfo_exists())
         if self.frame.winfo_exists():
             self.game_list = payload
             self.render()
@@ -26,7 +25,6 @@ class MenuView:
             self.frame = tk.Frame(self.root)
 
         game_list_container = tk.Frame(self.frame)
-
 
         label = tk.Label(self.frame, text="Lista de jogos:")
         label.pack()
