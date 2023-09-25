@@ -33,12 +33,6 @@ class Game:
 		
 		self.started = False
 		self.current_player_turn = None 
-
-		def initialize_game(self):
-			if self.connected_players != 2:
-				raise AppException("Não há jogadores suficientes para começar a partida")
-			self.current_player_turn = random.choice(self.connected_players)
-			self.started = True
         
 		for j in range(8):
 			for i in range(5):
@@ -49,6 +43,12 @@ class Game:
 		cp = copy.copy(self)
 		cp.players_sockets = None
 		return cp.__dict__
+
+	def initialize_game(self):
+		if len(self.connected_players) != 2:
+			raise AppException("Não há jogadores suficientes para começar a partida")
+		self.current_player_turn = random.choice(self.connected_players)
+		self.started = True
 
 def get_game_list():
 	return [{"game_id": game.game_id, "connected_players": game.connected_players} for game in games]
@@ -66,7 +66,6 @@ def game_create(socket_data):
 	return AppResponse(payload=game.as_dict(), server_emit_route="/game/update", server_emit_payload=get_game_list())
 
 def game_join(socket_data):
-	print("Join")
 	game_id = socket_data['payload']['game_id']
 	game = next(filter(lambda game: game.game_id == game_id, games), None)
 	if not game:
@@ -81,7 +80,7 @@ def game_join(socket_data):
 	game.initialize_game()
 
 	return AppResponse( 
-		payload=game, 
+		payload=game.as_dict(), 
 		server_emit_route=["/game/update", "/game/start/" + game_id], 
 		server_emit_payload=[get_game_list(), game.as_dict()]
 	)

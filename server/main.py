@@ -43,7 +43,6 @@ def handle_client(client_socket, address):
 
 	try:
 		raw_data = client_socket.recv(1024)
-		print("client_socket", client_socket)
 		if not raw_data:
 			remove_socket()
 			return
@@ -63,7 +62,6 @@ def handle_client(client_socket, address):
 		server_socket.close()
 		exit(0)
 
-	print(route in router)
 	if route in router:
 		fun = router[data['route']]
 		parameters_quantity = len(signature(fun).parameters)
@@ -73,13 +71,14 @@ def handle_client(client_socket, address):
 
 			if not appResponse:
 				return
-				
+
 			data['socket'].send(ok_response(data['route'], appResponse.payload))
 
 			if appResponse.server_emit_route:
 				for idx, route in enumerate(appResponse.server_emit_route):
 					server_emit(data['client_id'], route, appResponse.server_emit_payload[idx])
 		except AppException as error:
+			print(f'[ERROR {data["route"]}] {error}')
 			data['socket'].send(error_response(data['route'], "Não foi possível encontrar o jogo"))
 
 def server_emit(origin_client_id, route, payload):
