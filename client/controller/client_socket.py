@@ -1,8 +1,7 @@
+from queue import Queue
 from time import sleep
 import socket 
-import uuid
 import json
-from queue import Queue
 import threading
 
 ip = 'localhost'
@@ -18,7 +17,6 @@ responses_queue = Queue()
 routes = {}
 def on(route, callback):
     routes[route] = callback
-    print("Routes aa: ", routes)
 
 def listen():
     while True:
@@ -27,14 +25,11 @@ def listen():
             print("Resposta vazia - Socket fechado")
             exit(0)
 
-        print("--- raw_data", raw_data)
-
         data = json.loads(raw_data)
         
         if not 'server_event' in data:
             responses_queue.put(data)
             
-        print('routes: ', routes)
         print(f'[SERVER {data["route"]}] {data["payload"]}')
         if data['route'] in routes:
             routes[data['route']](data['payload'])

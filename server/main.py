@@ -32,13 +32,15 @@ router = {
 
 	"/game/create": Game.game_create,
 	"/game/join": Game.game_join,
+
+	"/game/card/turn": Game.game_card_turned,
 }
 # --------------------------------
 
 def handle_client(client_socket, address):
 	def remove_socket():
 		global inputs 
-		print("Socket closed ------------------------")
+		print("-=-=-=- Socket closed -=-=-=-")
 		inputs = list(filter(lambda s: not s is client_socket, inputs))
 
 	try:
@@ -51,14 +53,14 @@ def handle_client(client_socket, address):
 		return
         
 	decoded_data = raw_data.decode()
-	data = json.loads(decoded_data) # { "payload": { "test": 2 }, "route": "/game/join", 'client_id': "uuid" }
+	data = json.loads(decoded_data) # EX: { "payload": { "test": 2 }, "route": "/game/join", 'client_id': "uuid" }
 	data['socket'] = client_socket
 
 	route = data['route']
 	print(f'[REQUEST {route}] {data["payload"] if "payload" in data else {}}')
 
 	if route == 'STOP_APPLICATION':
-		client.close()
+		client_socket.close()
 		server_socket.close()
 		exit(0)
 
@@ -76,15 +78,19 @@ def handle_client(client_socket, address):
 
 			if appResponse.server_emit_route:
 				for idx, route in enumerate(appResponse.server_emit_route):
-					server_emit(data['client_id'], route, appResponse.server_emit_payload[idx])
+					server_emit(data['client_id'], route, appResponse.server_emit_payload[idx], appResponse.to)
 		except AppException as error:
 			print(f'[ERROR {data["route"]}] {error}')
-			data['socket'].send(error_response(data['route'], "Não foi possível encontrar o jogo"))
+			data['socket'].send(error_response(data['route'], str(error)))
 
-def server_emit(origin_client_id, route, payload):
+def server_emit(origin_client_id, route, payload, specific_targets_ids=None):
 	print(f'[SERVER EMIT {route}](from: {origin_client_id}) {payload}')
 	clients_to_remove = []
-	for client_id, socket in user_sockets.items():
+
+	# Send everybody but the one who's sending if not specified to whom
+	targets_ids = [(c_id, user_sockets[c_id]) for c_id in specific_targets_ids] if specific_targets_ids else user_sockets.items() 
+	
+	for client_id, socket in targets_ids:
 		if client_id == origin_client_id:
 			continue
 
