@@ -2,7 +2,7 @@ import tkinter as tk
 import threading
 import controller.GameController as GameController
 from config.constants import Results, results_text, CARD_COLUMNS, CARD_PAIRS_QUANTITY
-from controller.client_socket import client_id
+from controller.client_connection import client_id
 
 class GameView:
     def __init__(self, root):
@@ -22,8 +22,8 @@ class GameView:
         self.current_player_turn = False if not self.game['started'] else self.game['current_player_turn'] == client_id
         self.has_chosen_a_card = False
         self.chosen_card = None
-        self.current_player_points = 0
-        self.other_player_points = 0
+        self.current_player_points = 10
+        self.other_player_points = 9
         self.game_has_ended = False
 
         self.setup_game_socket_events()
@@ -33,7 +33,6 @@ class GameView:
         if not self.game['started']:
             GameController.on_player_joined(self.game['game_id'], self.other_player_joined)
         GameController.on_card_turned(self.game['game_id'], self.on_card_clicked_remotely)  
-        # GameController.
 
     # Listeners ----------
 
@@ -44,11 +43,12 @@ class GameView:
         self.render()
 
     def on_card_clicked_remotely(self, payload):
-        self.current_player_turn = self.has_chosen_a_card
+        print('on_card_clicked_remotely ', payload, self.current_player_turn, self.has_chosen_a_card)
+        self.current_player_turn = payload['turn_changed']
         self.card_click(payload['card_id'], remote_click=True)
 
 
-    # --------------------
+    # ---------------------
 
     def render_points(self, result):
         if result:
@@ -68,7 +68,7 @@ class GameView:
                 text=card['card_pair'] if card['turn_turned'] else 'X', 
                 padx=10, 
                 pady=10, 
-                command=lambda card_id=card['card_id']: self.card_click(card_id)
+                command=lambda card_id=card['card_id']: self.card_click(card_id) if self.current_player_turn else None
             )\
                 .grid(row=idx // CARD_COLUMNS, column=idx % CARD_COLUMNS)
 
@@ -117,11 +117,16 @@ class GameView:
     def render_current_player_turn_status(self, frame_to_append):
         if not self.game['started'] or self.game_has_ended:
             return
+        print("REREnder self.current_player_turn ", self.current_player_turn)
         label = tk.Label(frame_to_append, text="Sua vez" if self.current_player_turn else "Vez do outro jogador")
         label.pack()
 
     def card_click(self, card_id, remote_click = False):
+        print(f'remote_click: {remote_click}')
+        print(f'self.current_player_turn: {self.current_player_turn}')
+        print(f'self.block_actions: {self.block_actions}')
         if not remote_click and (not self.current_player_turn or self.block_actions):
+            print("Block")
             return
 
         card = next(filter(lambda card: card['card_id'] == card_id, self.game['cards']))
@@ -133,7 +138,8 @@ class GameView:
             return
 
         if not remote_click:
-            GameController.card_turn(self.game['game_id'], card['card_id'])        
+            print("COMMUNICATE CARD TURN")
+            threading.Thread(target=lambda: GameController.card_turn(self.game['game_id'], card['card_id'])).start()
 
         card['turn_turned'] = not card['turn_turned']
 

@@ -27,10 +27,9 @@ def generate_card_map():
 	return cards
 
 class Game:
-	def __init__(self, game_id, creator_player_id, creator_socket):
+	def __init__(self, game_id, creator_player_id):
 		self.game_id = game_id
 		self.connected_players = [creator_player_id]
-		self.players_sockets = [creator_socket]
 		self.cards = generate_card_map()
 		
 		self.started = False
@@ -44,7 +43,6 @@ class Game:
 
 	def as_dict(self):
 		cp = copy.copy(self)
-		cp.players_sockets = None
 		return cp.__dict__
 	
 	def get_other_player_id(self, client_id):
@@ -88,49 +86,65 @@ def find_game_or_raise(game_id) -> Game:
 
 # --------------------------------
 
-def get_games_info(socket_data):
-	return AppResponse(payload={"games": get_game_list()})
+def get_games_info(connection_data):
+	return AppResponse(
+		payload={"games": get_game_list()},
+		connection_data=connection_data
+	).response
 
 # --------------------------------
 
-def game_create(socket_data):
-	game_id = socket_data['payload']['game_id']
+def game_create(connection_data):
+	print(f"Game create {connection_data}")
+	game_id = connection_data['payload']['game_id']
 	game_exists = find_game(game_id)
 	if game_exists:
 		raise AppException("Id já existe")
-	game = Game(game_id, socket_data['client_id'], socket_data['socket'])
+	game = Game(game_id, connection_data['client_id'])
 	games.append(game)
-	return AppResponse(payload=game.as_dict(), server_emit_route="/game/update", server_emit_payload=get_game_list())
+	teste = AppResponse(
+		payload=game.as_dict(), 
+		server_emit_route="/game/update", 
+		server_emit_payload=get_game_list(),
+		connection_data=connection_data
+	).response
+	print(f'teste: {teste}')
+	return teste
 
-def game_join(socket_data):
-	game_id = socket_data['payload']['game_id']
+def game_join(connection_data):
+	game_id = connection_data['payload']['game_id']
 	game = find_game_or_raise(game_id)
 	
 	if len(game.connected_players) == 2:
 		raise AppException("Número de jogadores máximo alcançado")
 	
-	game.connected_players.append(socket_data['client_id'])
-	game.players_sockets.append(socket_data['socket'])
+	game.connected_players.append(connection_data['client_id'])
 
 	game.initialize_game()
 
 	return AppResponse( 
 		payload=game.as_dict(), 
 		server_emit_route=["/game/update", "/game/start/" + game_id], 
-		server_emit_payload=[get_game_list(), game.as_dict()]
-	)
+		server_emit_payload=[get_game_list(), game.as_dict()],
+		connection_data=connection_data
+	).response
 
-def game_card_turned(socket_data):
-	client_id = socket_data['client_id']
-	game_id = socket_data['payload']['game_id']
-	card_id = socket_data['payload']['card_id']
+def game_card_turned(connection_data):
+	client_id = connection_data['client_id']
+	game_id = connection_data['payload']['game_id']
+	card_id = connection_data['payload']['card_id']
 	game = find_game_or_raise(game_id)
 
+	print(f'game_card_turned--')
+	print(f'client_id: {client_id}')
+	print(f'game.current_player_turn: {game.current_player_turn}')
 	game.turn_card(card_id, client_id)
+	print(f'game.current_player_turn: {game.current_player_turn}')
 
 	return AppResponse(
 		payload=None, 
-		server_emit_payload={ 'card_id': card_id },
+		server_emit_payload={ 'card_id': card_id, 'turn_changed': client_id != game.current_player_turn },
 		server_emit_route=f'/game/{game_id}/turn',
-		to=game.get_other_player_id(client_id)
-	)
+		to=game.get_other_player_id(client_id),
+		connection_data=connection_data
+	).response

@@ -83,7 +83,9 @@ class MenuView:
             return
         
         try:
+            print("Game create")
             GameController.create_game(game_id)
+            print("joint")
             self.on_game_joined()
             self.destroy()
         except Exception as e:
