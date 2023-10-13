@@ -95,21 +95,18 @@ def get_games_info(connection_data):
 # --------------------------------
 
 def game_create(connection_data):
-	print(f"Game create {connection_data}")
 	game_id = connection_data['payload']['game_id']
 	game_exists = find_game(game_id)
 	if game_exists:
 		raise AppException("Id já existe")
 	game = Game(game_id, connection_data['client_id'])
 	games.append(game)
-	teste = AppResponse(
+	return AppResponse(
 		payload=game.as_dict(), 
 		server_emit_route="/game/update", 
 		server_emit_payload=get_game_list(),
 		connection_data=connection_data
 	).response
-	print(f'teste: {teste}')
-	return teste
 
 def game_join(connection_data):
 	game_id = connection_data['payload']['game_id']
@@ -135,11 +132,7 @@ def game_card_turned(connection_data):
 	card_id = connection_data['payload']['card_id']
 	game = find_game_or_raise(game_id)
 
-	print(f'game_card_turned--')
-	print(f'client_id: {client_id}')
-	print(f'game.current_player_turn: {game.current_player_turn}')
 	game.turn_card(card_id, client_id)
-	print(f'game.current_player_turn: {game.current_player_turn}')
 
 	return AppResponse(
 		payload=None, 

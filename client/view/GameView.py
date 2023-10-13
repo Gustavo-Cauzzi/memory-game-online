@@ -43,7 +43,6 @@ class GameView:
         self.render()
 
     def on_card_clicked_remotely(self, payload):
-        print('on_card_clicked_remotely ', payload, self.current_player_turn, self.has_chosen_a_card)
         self.current_player_turn = payload['turn_changed']
         self.card_click(payload['card_id'], remote_click=True)
 
@@ -117,16 +116,11 @@ class GameView:
     def render_current_player_turn_status(self, frame_to_append):
         if not self.game['started'] or self.game_has_ended:
             return
-        print("REREnder self.current_player_turn ", self.current_player_turn)
         label = tk.Label(frame_to_append, text="Sua vez" if self.current_player_turn else "Vez do outro jogador")
         label.pack()
 
     def card_click(self, card_id, remote_click = False):
-        print(f'remote_click: {remote_click}')
-        print(f'self.current_player_turn: {self.current_player_turn}')
-        print(f'self.block_actions: {self.block_actions}')
         if not remote_click and (not self.current_player_turn or self.block_actions):
-            print("Block")
             return
 
         card = next(filter(lambda card: card['card_id'] == card_id, self.game['cards']))
@@ -138,7 +132,6 @@ class GameView:
             return
 
         if not remote_click:
-            print("COMMUNICATE CARD TURN")
             threading.Thread(target=lambda: GameController.card_turn(self.game['game_id'], card['card_id'])).start()
 
         card['turn_turned'] = not card['turn_turned']

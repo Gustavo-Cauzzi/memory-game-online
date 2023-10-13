@@ -7,7 +7,6 @@ root = tk.Tk()
 root.title("Memória online")
 
 def go_to_game_view():
-    print('go_to_game_view')
     menu.destroy()
     GameView(root)
 

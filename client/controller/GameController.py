@@ -13,7 +13,6 @@ def exit_game():
 
 def create_game(game_id):
     response = connection.send_data('game_create', { 'game_id': game_id })
-    print(f'response: {response}')
     current_game['game'] = response  # TODO use only current_game['game']
     current_game['cards'] = response['cards']
 

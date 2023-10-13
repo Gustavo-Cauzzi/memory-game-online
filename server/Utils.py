@@ -27,7 +27,6 @@ class AppException(Exception):
 
 class AppResponse():
 	def __init__(self, connection_data=None, server_emit_route=None, server_emit_payload=None, payload={}, to=None):
-		print("1")
 		if server_emit_route and server_emit_payload:
 			multiple_routes = isinstance(server_emit_route, list)
 			self.server_emit_route = [server_emit_route] if not multiple_routes else server_emit_route
@@ -41,17 +40,12 @@ class AppResponse():
 		self.client_id = None if not connection_data else connection_data['client_id']
 
 		self.response = ok_response('UNKNOWN' if not connection_data else connection_data['route'], payload)
-		print(f'connection_data: {connection_data}')
-		print(f'123')
 
 		self.emit_if_necessary()
-		print(f'1234')
 	
 	def emit_if_necessary(self):
-		print(f'self.server_emit_route: {self.server_emit_route}')
 		if self.server_emit_route:
 			for idx, route in enumerate(self.server_emit_route):
-				print(f'route: {route}')
 				server_emit(self.client_id, route, self.server_emit_payload[idx], self.to)
 
 	def __str__(self):
@@ -63,14 +57,10 @@ def server_emit(origin_client_id, route, payload, specific_targets_ids=None):
 	print(f'[SERVER EMIT {route}](from: {origin_client_id}) {payload}')
 	clients_to_remove = []
 
-	print(f'user_servers: {user_servers}')
-
 	# Send everybody but the one who's sending if not specified to whom
 	targets_ids = [(c_id, user_servers[c_id]) for c_id in specific_targets_ids] if specific_targets_ids else user_servers.items() 
-	print(f'targets_ids: {targets_ids}')
 
 	for client_id, client_server in targets_ids:
-		print(f'client_id: {client_id}')
 		if client_id == origin_client_id:
 			continue
 
